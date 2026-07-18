@@ -1,0 +1,6 @@
+{
+  "name": "공정한 집안일 심부름 당번 고르기 AI 에이전트 만들기",
+  "description": "12~14세 학생 대상 AI 윤리 캠프를 위한 집안일 당번 뽑기 AI 에이전트 설계 및 테스트 도구",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
