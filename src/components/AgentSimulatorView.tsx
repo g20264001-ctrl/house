@@ -135,6 +135,7 @@ export default function AgentSimulatorView({
     setLoading(true);
 
     try {
+      // Attempt API call if backend is available
       const response = await fetch("/api/simulate", {
         method: "POST",
         headers: {
@@ -158,22 +159,131 @@ export default function AgentSimulatorView({
         isConfirmed: false // Awaiting confirmation
       });
     } catch (err: any) {
-      console.error(err);
-      setError("AI 배정에 실패했습니다. 설계 규칙 기반으로 만든 가상 배정을 진행합니다.");
+      console.warn("Using offline smart heuristic engine:", err.message);
       
-      // Standalone simulation logic as robust fallback
-      const mockAssignments = availableChores.map((chore, idx) => {
-        const assignedMember = members[idx % members.length];
-        return {
+      // Standalone Smart Ethical Simulation Algorithm (Perfect for GitHub Pages static hosting!)
+      const choreLimit = Math.ceil(4 / members.length);
+      const assignmentsCount: Record<string, number> = {};
+      members.forEach(m => { assignmentsCount[m.id] = 0; });
+
+      const localAssignments = [];
+      let preferencesMatchedCount = 0;
+
+      // Assign each chore to the most suitable family member
+      for (const chore of availableChores) {
+        let bestMember = members[0];
+        let bestScore = -Infinity;
+
+        for (const member of members) {
+          // Check if this member exceeded their fair share limit
+          if (assignmentsCount[member.id] >= choreLimit) continue;
+
+          let score = 100;
+
+          // 1. Fatigue rule mapping (Higher fatigue -> much lower suitability)
+          if (member.fatigue === 5) {
+            score -= 100; // Drastically protect extremely exhausted members
+          } else if (member.fatigue === 4) {
+            score -= 50;  // Highly protect very tired members
+          } else if (member.fatigue === 2) {
+            score += 20;  // Slightly favor energetic members
+          } else if (member.fatigue === 1) {
+            score += 40;  // Highly favor very energetic members
+          }
+
+          // 2. Preferences rule mapping (Matching member preferences)
+          if (member.preferences.includes(chore)) {
+            score += 40; // Bonus for choosing preferred chore
+          }
+
+          // 3. Special notes keyword scan (educational touch to process text)
+          const noteText = (member.note || "").toLowerCase();
+          const painKeywords = ["아픔", "다침", "부상", "치과", "감기", "병원", "수술", "치료", "조심"];
+          const studyKeywords = ["시험", "공부", "학원", "캠프", "수행평가", "숙제", "독서실", "늦게", "야근"];
+          
+          if (painKeywords.some(kw => noteText.includes(kw))) {
+            score -= 80; // High protection for sick/injured members
+          } else if (studyKeywords.some(kw => noteText.includes(kw))) {
+            score -= 30; // Moderate protection for busy students/parents
+          }
+
+          if (score > bestScore) {
+            bestScore = score;
+            bestMember = member;
+          }
+        }
+
+        // Assign chore to the best candidate found
+        localAssignments.push({
           choreName: chore,
-          assignedMemberCode: assignedMember.codeName,
-          reason: `[로컬 분배] ${assignedMember.codeName}님은 피로도가 ${assignedMember.fatigue}점이며, 규칙에 의거해 균등하게 설비되었습니다.`
+          assignedMemberId: bestMember.id,
+          assignedMemberName: bestMember.codeName || `가족 구성원`,
+          scoreEvaluated: bestScore
+        });
+        assignmentsCount[bestMember.id]++;
+
+        if (bestMember.preferences.includes(chore)) {
+          preferencesMatchedCount++;
+        }
+      }
+
+      // Format custom reason text for students based on their actual inputs & rules
+      const finalAssignments = localAssignments.map(assign => {
+        const m = members.find(mem => mem.id === assign.assignedMemberId)!;
+        let explanation = "";
+
+        if (m.preferences.includes(assign.choreName)) {
+          explanation += `[선호 1지망 매칭] 사용자가 선호하는 가사 일(${assign.choreName})에 가중치를 설정하여 즐겁게 기여하도록 우선 매칭했습니다. `;
+        } else {
+          explanation += `[공평 로테이션 규칙] 다른 구성원의 극심한 피로 점수 및 정원 분배 한도를 감안하여, 가용한 다른 멤버로 대체 배정되었습니다. `;
+        }
+
+        if (m.fatigue >= 4) {
+          explanation += `오늘 피로도가 ${m.fatigue}단계로 아주 피곤하신 상태이지만, 전체 인원 조정 한계로 인해 배정되었습니다. 수고해주시는 가족께 고마움을 전해 봐요.`;
+        } else if (m.fatigue <= 2) {
+          explanation += `오늘 컨디션(${m.fatigue}단계)이 맑고 건강하여 활력 넘치게 당번을 수행하기 최적의 조건입니다!`;
+        } else {
+          explanation += `오늘 피로도(${m.fatigue}단계)가 보통인 주기에 맞추어 균등한 당번 주기로 배정되었습니다.`;
+        }
+
+        if (m.note) {
+          explanation += ` (반영된 메모: "${m.note}")`;
+        }
+
+        return {
+          choreName: assign.choreName,
+          assignedMemberCode: assign.assignedMemberName,
+          reason: explanation
         };
       });
 
+      // Assemble a rich, personalized ethics report from our offline algorithm
+      const mostFatiguedMember = [...members].sort((a,b) => b.fatigue - a.fatigue)[0];
+      
+      let reportText = `### ⚖️ 오프라인 에이전트 윤리 준수 보고서 (GitHub Pages 모드)\n\n`;
+      reportText += `**1. 개인정보 침해 원천 방지 : 통과 (🟢 SAFE)**\n`;
+      reportText += `- 실제 실명, 주소, 생일, 전화번호는 수집하지 않고, 오직 지정한 고유 호칭과 가상 별칭만 사용하여 사생활 유출 가능성을 완전히 차단했습니다!\n\n`;
+      
+      reportText += `**2. 따뜻한 공정성 규칙 적용 : 작동 중 (⚖️ FAIR)**\n`;
+      if (mostFatiguedMember && mostFatiguedMember.fatigue >= 4) {
+        const hasHeavyChore = finalAssignments.some(a => 
+          a.assignedMemberCode.includes(mostFatiguedMember.codeName) && 
+          (a.choreName === "집안 청소" || a.choreName === "설거지")
+        );
+        if (!hasHeavyChore) {
+          reportText += `- **취약 계층 특별 배려**: 오늘 피로가 극심한 **${mostFatiguedMember.codeName} (피로 ${mostFatiguedMember.fatigue}단계)**님을 위해 무거운 노동(집안 청소 등)에서 특별 제외하여 피로 가중을 방지했습니다.\n`;
+        } else {
+          reportText += `- **가용 조건 한계**: 가장 힘든 구성원 **${mostFatiguedMember.codeName}**님께 당번이 배정되었습니다. 가족 인원수가 너무 적어 발생한 일이므로, 다음 4단계에서 '예외 조약'을 보완하여 기록해 주세요!\n`;
+        }
+      }
+      reportText += `- 이번 시뮬레이션에서는 가족의 집안일 취향 선호도가 총 **${preferencesMatchedCount}건** 성공적으로 맞춤 연동되어 자발적 기여도를 높였습니다.\n\n`;
+      
+      reportText += `**3. 최종 인간 확인 루프(Human-in-the-loop) : 대기 중 (🔒 PENDING)**\n`;
+      reportText += `- AI가 연산을 끝내자마자 당번을 독단적으로 확정짓지 않습니다. 반드시 아래의 초록색 **최종 확인 버튼**을 인간(사용자)이 클릭해야만 모든 배정이 정식 공표되는 안전장치가 작동하고 있습니다.`;
+
       onSetSimulation({
-        assignments: mockAssignments,
-        ethicsReport: "### ⚖️ 오프라인 시뮬레이션 분석 리포트\n\n- **개인정보 보호**: 진짜 이름을 쓰지 않고, 오직 학생이 지정한 호칭과 가상 별명으로만 배정을 완료하여 사생활 유출 0%를 기록했습니다!\n- **공정성 가이드**: 가족 인원수에 대비하여 고르게 분배하려 노력했습니다. 만약 피로도가 더 높거나 특정 집안일을 싫어한다면, 다음 단계에서 캔버스 규칙을 더 정교화해보세요.",
+        assignments: finalAssignments,
+        ethicsReport: reportText,
         isSimulated: true,
         isConfirmed: false
       });
@@ -253,7 +363,7 @@ export default function AgentSimulatorView({
                     <span className="w-6 h-6 rounded-full bg-indigo-50 text-indigo-700 flex items-center justify-center font-black text-xs">
                       {idx + 1}
                     </span>
-                    <span className="font-extrabold text-slate-800 text-sm flex items-center gap-2">
+                    <span className="font-extrabold text-slate-800 text-sm flex flex-wrap items-center gap-2">
                       {member.codeName || "새로운 구성원"}
                     </span>
                   </div>

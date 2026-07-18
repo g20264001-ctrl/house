@@ -197,13 +197,17 @@ ${membersInfo}
 
 // Setup Vite or Static assets serving
 async function startServer() {
+  console.log("Starting server.ts...");
+  console.log("NODE_ENV is:", process.env.NODE_ENV);
   if (process.env.NODE_ENV !== "production") {
+    console.log("Using Vite middleware in development mode");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
     });
     app.use(vite.middlewares);
   } else {
+    console.log("Serving static production assets from dist/");
     const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath));
     app.get("*", (req, res) => {

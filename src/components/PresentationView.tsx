@@ -137,7 +137,7 @@ export default function PresentationView({
     },
     {
       title: "🧪 시뮬레이션 가동 및 테스트 결과",
-      subtitle: "실제 가족 데이터를 익명 번호로 가동시켜 확인한 당번 배정 상황",
+      subtitle: "실제 가족 데이터를 가상 별칭으로 가동시켜 확인한 당번 배정 상황",
       content: (
         <div className="space-y-4 pt-2" id="slide-4-content">
           {simulation.isSimulated ? (
