@@ -27,31 +27,14 @@ export default function AgentSimulatorView({
 
   const availableChores = ["집안 청소", "빨래", "설거지", "요리"];
 
-  // Handle setting code numbers directly
-  const handleUpdateMemberCode = (index: number, code: number) => {
+  // Handle setting role and number code directly, generating codeName as My Number/Family Number
+  const handleUpdateMemberRoleAndNumber = (index: number, isSelf: boolean, code: number) => {
     const updated = [...members];
     updated[index].numberCode = code;
+    updated[index].codeName = isSelf ? `나의 번호 ${code}` : `가족 번호 ${code}`;
     onSetMembers(updated);
-  };
-
-  // Handle setting relationship callsign or custom nickname directly
-  const handleUpdateMemberCodeName = (index: number, name: string) => {
-    // Basic warning validation to avoid real full names (2-4 Korean characters)
-    const namePattern = /^[가-힣]{3,4}$/;
-    const phonePattern = /010[- \d]/;
-    
-    // Common safe relation terms / nickname terms in Korean
-    const safeTerms = ["엄마", "아빠", "할머니", "할아버지", "누나", "형", "언니", "오빠", "동생", "삼촌", "이모", "고모", "나", "보안번호", "번호"];
-    const isSafeTerm = safeTerms.some(term => name.includes(term));
-    
-    if (phonePattern.test(name) || (name.length >= 3 && namePattern.test(name) && !isSafeTerm)) {
-      setError("주의: 진짜 이름이나 전화번호 같은 민감한 개인정보는 적지 않도록 주의하세요! (엄마, 아빠, 할머니, 누나, 짱구 같은 친근한 호칭이나 별명은 괜찮아요!)");
-    } else {
-      setError(null);
-    }
-    const updated = [...members];
-    updated[index].codeName = name;
-    onSetMembers(updated);
+    // Reset simulation if details change
+    onSetSimulation({ ...simulation, isSimulated: false, isConfirmed: false });
   };
 
   // Handle setting fatigue
@@ -97,14 +80,10 @@ export default function AgentSimulatorView({
     setError(null);
     const randomCode = Math.floor(10 + Math.random() * 90); // 10 ~ 99 random number
     
-    // Choose a default role based on current count
-    const defaultRoles = ["동생", "언니/누나", "형/오빠", "이모/삼촌", "고모/고모부"];
-    const chosenRole = defaultRoles[(members.length - 4) % defaultRoles.length] || "새로운 구성원";
-    
     const newMember: FamilyMember = {
       id: crypto.randomUUID(),
       numberCode: randomCode,
-      codeName: chosenRole,
+      codeName: `가족 번호 ${randomCode}`,
       preferences: [],
       fatigue: 3,
       note: ""
@@ -382,18 +361,40 @@ export default function AgentSimulatorView({
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Item 1: Nickname / Relationship title */}
+                  {/* Item 1: Safe Role & Chosen Number Code */}
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-slate-500 block">
-                      👤 호칭 또는 별명 (직접 입력)
+                      👤 역할 종류 및 번호 선택
                     </label>
-                    <input
-                      type="text"
-                      placeholder="예: 엄마, 아빠, 할머니, 동생"
-                      value={member.codeName}
-                      onChange={(e) => handleUpdateMemberCodeName(idx, e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 focus:outline-hidden focus:border-indigo-500 focus:bg-white"
-                    />
+                    <div className="flex items-center gap-1.5">
+                      <select
+                        value={member.codeName.startsWith("나의 번호") ? "self" : "family"}
+                        onChange={(e) => {
+                          const isSelfSelected = e.target.value === "self";
+                          handleUpdateMemberRoleAndNumber(idx, isSelfSelected, member.numberCode);
+                        }}
+                        className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-700 focus:outline-hidden focus:border-indigo-500 focus:bg-white"
+                      >
+                        <option value="self">나의 번호</option>
+                        <option value="family">가족 번호</option>
+                      </select>
+                      
+                      <div className="flex items-center gap-1 flex-1">
+                        <input
+                          type="number"
+                          min={1}
+                          max={999}
+                          value={member.numberCode}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value) || 1;
+                            const isSelfSelected = member.codeName.startsWith("나의 번호");
+                            handleUpdateMemberRoleAndNumber(idx, isSelfSelected, val);
+                          }}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 focus:outline-hidden focus:border-indigo-500 focus:bg-white"
+                          placeholder="숫자 입력"
+                        />
+                      </div>
+                    </div>
                   </div>
 
                   {/* Item 2: Fatigue adjustment */}

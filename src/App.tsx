@@ -29,35 +29,35 @@ export default function App() {
   const [members, setMembers] = useState<FamilyMember[]>([
     {
       id: "1",
-      numberCode: 12,
-      codeName: "엄마",
-      preferences: ["설거지", "요리"],
-      fatigue: 3,
-      note: "오늘 하루 집안일로 힘드심"
-    },
-    {
-      id: "2",
-      numberCode: 34,
-      codeName: "아빠",
-      preferences: ["집안 청소"],
-      fatigue: 4,
-      note: "주말 출장 연습으로 몸이 피곤함"
-    },
-    {
-      id: "3",
-      numberCode: 56,
-      codeName: "할머니",
-      preferences: ["빨래", "설거지"],
-      fatigue: 1,
-      note: "컨디션 최고! 산책 다녀오심"
-    },
-    {
-      id: "4",
-      numberCode: 78,
-      codeName: "나",
+      numberCode: 10,
+      codeName: "나의 번호 10",
       preferences: ["요리"],
       fatigue: 2,
       note: "오늘 수학 캠프 다녀옴"
+    },
+    {
+      id: "2",
+      numberCode: 12,
+      codeName: "가족 번호 12",
+      preferences: ["설거지", "요리"],
+      fatigue: 3,
+      note: "오늘 하루 외부 일정으로 힘듬"
+    },
+    {
+      id: "3",
+      numberCode: 34,
+      codeName: "가족 번호 34",
+      preferences: ["집안 청소"],
+      fatigue: 4,
+      note: "장거리 출장 연습으로 몸이 피곤함"
+    },
+    {
+      id: "4",
+      numberCode: 56,
+      codeName: "가족 번호 56",
+      preferences: ["빨래", "설거지"],
+      fatigue: 1,
+      note: "컨디션 최고! 산책 다녀오심"
     }
   ]);
 
