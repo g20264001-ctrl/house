@@ -181,14 +181,16 @@ export default function AgentSimulatorView({
           let score = 100;
 
           // 1. Fatigue rule mapping (Higher fatigue -> much lower suitability)
-          if (member.fatigue === 5) {
-            score -= 100; // Drastically protect extremely exhausted members
+          if (member.fatigue >= 6) {
+            score -= 130; // Drastically protect extremely exhausted members (Level 6~7)
+          } else if (member.fatigue === 5) {
+            score -= 90;  // Highly protect very tired members (Level 5)
           } else if (member.fatigue === 4) {
-            score -= 50;  // Highly protect very tired members
+            score -= 40;  // Moderately protect tired members (Level 4)
           } else if (member.fatigue === 2) {
-            score += 20;  // Slightly favor energetic members
+            score += 20;  // Slightly favor energetic members (Level 2)
           } else if (member.fatigue === 1) {
-            score += 40;  // Highly favor very energetic members
+            score += 40;  // Highly favor very energetic members (Level 1)
           }
 
           // 2. Preferences rule mapping (Matching member preferences)
@@ -238,7 +240,7 @@ export default function AgentSimulatorView({
           explanation += `[공평 로테이션 규칙] 다른 구성원의 극심한 피로 점수 및 정원 분배 한도를 감안하여, 가용한 다른 멤버로 대체 배정되었습니다. `;
         }
 
-        if (m.fatigue >= 4) {
+        if (m.fatigue >= 5) {
           explanation += `오늘 피로도가 ${m.fatigue}단계로 아주 피곤하신 상태이지만, 전체 인원 조정 한계로 인해 배정되었습니다. 수고해주시는 가족께 고마움을 전해 봐요.`;
         } else if (m.fatigue <= 2) {
           explanation += `오늘 컨디션(${m.fatigue}단계)이 맑고 건강하여 활력 넘치게 당번을 수행하기 최적의 조건입니다!`;
@@ -265,7 +267,7 @@ export default function AgentSimulatorView({
       reportText += `- 실제 실명, 주소, 생일, 전화번호는 수집하지 않고, 오직 지정한 고유 호칭과 가상 별칭만 사용하여 사생활 유출 가능성을 완전히 차단했습니다!\n\n`;
       
       reportText += `**2. 따뜻한 공정성 규칙 적용 : 작동 중 (⚖️ FAIR)**\n`;
-      if (mostFatiguedMember && mostFatiguedMember.fatigue >= 4) {
+      if (mostFatiguedMember && mostFatiguedMember.fatigue >= 5) {
         const hasHeavyChore = finalAssignments.some(a => 
           a.assignedMemberCode.includes(mostFatiguedMember.codeName) && 
           (a.choreName === "집안 청소" || a.choreName === "설거지")
@@ -400,7 +402,7 @@ export default function AgentSimulatorView({
                       🔋 오늘의 피로도: <span className="text-indigo-600 font-bold">{member.fatigue}단계</span>
                     </label>
                     <div className="flex items-center gap-1 mt-1">
-                      {[1, 2, 3, 4, 5].map((level) => (
+                      {[1, 2, 3, 4, 5, 6, 7].map((level) => (
                         <button
                           key={level}
                           type="button"
