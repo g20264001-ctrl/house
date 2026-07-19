@@ -25,36 +25,36 @@ export default function App() {
     fairnessRules: ""
   });
 
-  // Default mock family members with ONLY custom chosen codes to teach privacy by design.
+  // Default mock family members with ONLY custom chosen codes/relations to teach privacy by design.
   const [members, setMembers] = useState<FamilyMember[]>([
     {
       id: "1",
-      numberCode: 10,
-      codeName: "나의 번호 10",
+      numberCode: 1,
+      codeName: "나",
       preferences: ["요리"],
       fatigue: 2,
       note: "오늘 수학 캠프 다녀옴"
     },
     {
       id: "2",
-      numberCode: 12,
-      codeName: "가족 번호 12",
+      numberCode: 2,
+      codeName: "동생",
       preferences: ["설거지", "요리"],
       fatigue: 3,
-      note: "오늘 하루 외부 일정으로 힘듬"
+      note: "오늘 하루 외부 일정으로 힘듦"
     },
     {
       id: "3",
-      numberCode: 34,
-      codeName: "가족 번호 34",
+      numberCode: 3,
+      codeName: "엄마",
       preferences: ["집안 청소"],
       fatigue: 4,
-      note: "장거리 출장 연습으로 몸이 피곤함"
+      note: "장거리 출장으로 피곤하심"
     },
     {
       id: "4",
-      numberCode: 56,
-      codeName: "가족 번호 56",
+      numberCode: 4,
+      codeName: "아빠",
       preferences: ["빨래", "설거지"],
       fatigue: 1,
       note: "컨디션 최고! 산책 다녀오심"

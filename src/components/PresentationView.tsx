@@ -148,7 +148,9 @@ export default function PresentationView({
                   {simulation.assignments.map((assign, idx) => (
                     <div key={idx} className="bg-white p-3 rounded-lg border border-slate-200 shadow-3xs flex items-center justify-between text-xs">
                       <div>
-                        <span className="font-bold text-indigo-700 block">🧹 {assign.choreName}</span>
+                        <span className="font-bold text-indigo-700 block">
+                          [{assign.timeslot}] 🧹 {assign.choreName}
+                        </span>
                         <span className="text-slate-400">사유: {assign.reason.substring(0, 45)}...</span>
                       </div>
                       <span className="bg-indigo-50 border border-indigo-100 text-indigo-800 px-2 py-1 rounded-full font-bold">

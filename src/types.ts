@@ -19,6 +19,7 @@ export interface FamilyMember {
 }
 
 export interface ChoreAssignment {
+  timeslot: string; // "아침", "점심", "저녁"
   choreName: string;
   assignedMemberCode: string;
   reason: string;

@@ -123,33 +123,30 @@ app.post("/api/simulate", async (req, res) => {
     const ai = getGeminiClient();
 
     const membersInfo = members.map((m: any) => 
-      `- 식별 코드: ${m.codeName || `나의 번호 ${m.numberCode}`} (피로도: ${m.fatigue}점, 선호하는 집안일: [${(m.preferences || []).join(", ")}], 한마디: ${m.note || "없음"})`
+      `- 식별 호칭/번호: ${m.codeName || `가족 번호 ${m.numberCode}`} (피로도: ${m.fatigue}점, 선호하는 집안일: [${(m.preferences || []).join(", ")}], 한마디: ${m.note || "없음"})`
     ).join("\n");
 
     const prompt = `
 당신은 학생이 설계한 집안일 분담 AI 에이전트 [${canvas.agentName || "공정 에이전트"}]입니다.
-학생들이 수립한 윤리 규칙 및 공정성 기준을 철저히 반영하여 4가지 집안일(집안 청소, 빨래, 설거지, 요리)을 가족 구성원에게 배정하세요.
+학생들이 수립한 윤리 규칙 및 공정성 기준을 철저히 반영하여 하루 3가지 시간대(아침, 점심, 저녁)별로 4가지 집안일(집안 청소, 빨래, 설거지, 요리)을 가족 구성원에게 배정하세요.
 
 [에이전트 윤리 및 공정성 기준]
 - 입력받을 정보: ${canvas.inputs || "피로도, 선호 집안일 등"}
 - 절대 하면 안 되는 행동: ${canvas.prohibited || "한 사람에게만 몰아주기 등"}
-- 개인정보 보호 규칙: ${canvas.privacyRules || "나의 번호만 사용하고 개인정보 수집 금지"}
+- 개인정보 보호 규칙: ${canvas.privacyRules || "실명 사용 금지, 가상 호칭이나 별명 사용"}
 - 공정성 규칙: ${canvas.fairnessRules || "피로도가 높은 사람은 쉬운 일을 주거나 집안일에서 제외 등"}
 
-[가족 구성원 정보 (개인정보 보호를 위해 오직 익명 식별 코드로만 구성됨)]
+[가족 구성원 정보 (개인정보 보호를 위해 오직 익명 호칭과 번호로만 구성됨)]
 ${membersInfo}
 
-[배정할 집안일 목록]
-- 집안 청소 (정원 1명)
-- 빨래 (정원 1명)
-- 설거지 (정원 1명)
-- 요리 (정원 1명)
-
-[지시 사항]
-1. 위 4가지 집안일 각각에 대해 정확히 1명의 구성원을 배정하십시오.
-2. 학생이 정한 공정성 규칙(예: 피로도 고려, 집안일 선호도 등)을 최대한 반영하십시오.
-3. 배정 이유를 친근하고 명확한 한국어로 설명해주십시오.
-4. 배정 완료 후, 이 배정이 학생의 윤리 규칙에 얼마나 잘 부합하는지 평가하는 '윤리 리포트(ethicsReport)'를 작성해주세요. (예: "개인정보 수집 금지 규칙을 잘 준수하여 오직 번호로만 배정했습니다!", "피로도가 가장 높은 번호 XX번에게는 상대적으로 가벼운 일을 배정해 공정성을 지켰습니다." 등)
+[배정 방식 및 규칙]
+- 시간대: "아침", "점심", "저녁" 총 3개 시간대
+- 집안일 종류: "집안 청소", "빨래", "설거지", "요리" 총 4개 종류
+- 각 집안일은 각 시간대별로 정원이 정확히 1명입니다. (즉, 시간대별로 '집안 청소' 1명, '빨래' 1명, '설거지' 1명, '요리' 1명씩 총 12개의 배정이 나옵니다.)
+- 학생이 정한 공정성 규칙(예: 피로도 고려, 집안일 선호도 등)을 최대한 반영하십시오.
+- 특정 구성원에게 너무 과도하게 집안일이 몰리지 않도록 조율하십시오.
+- 배정 이유를 친근하고 명확한 한국어로 설명해주십시오.
+- 배정 완료 후, 이 배정이 학생의 윤리 규칙과 공정성 가이드라인에 얼마나 잘 부합하는지 평가하는 '윤리 리포트(ethicsReport)'를 작성해주세요. (예: "개인정보 보호 수칙을 철저히 준수하여 실명 대신 호칭으로만 배정했습니다!", "오늘 너무 피로한 구성원에게는 가벼운 당번만 매칭했습니다" 등)
 
 반드시 다음 JSON 스키마를 만족하도록 결과를 출력하세요.
 `;
@@ -167,11 +164,12 @@ ${membersInfo}
               items: {
                 type: Type.OBJECT,
                 properties: {
+                  timeslot: { type: Type.STRING, description: "시간대 ('아침', '점심', '저녁' 중 하나)" },
                   choreName: { type: Type.STRING, description: "집안일 이름 (집안 청소, 빨래, 설거지, 요리 중 하나)" },
-                  assignedMemberCode: { type: Type.STRING, description: "배정된 가족 구성원의 식별 코드 (예: 나의 번호 12)" },
-                  reason: { type: Type.STRING, description: "이 사람에게 배정한 공정한 이유" },
+                  assignedMemberCode: { type: Type.STRING, description: "배정된 가족 구성원의 식별 코드/호칭 (예: 엄마)" },
+                  reason: { type: Type.STRING, description: "이 시간대의 집안일에 이 사람을 배정한 공정한 이유" },
                 },
-                required: ["choreName", "assignedMemberCode", "reason"],
+                required: ["timeslot", "choreName", "assignedMemberCode", "reason"],
               },
             },
             ethicsReport: {
